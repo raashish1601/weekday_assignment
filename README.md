@@ -10,12 +10,12 @@ Make sure you have Node.js and npm installed on your machine.
 
 ### Installation
 
-To install the project dependencies, run: npm i
+To install the project dependencies, run: `npm install`
 
 
 ### Development
 
-To start the development server, run: npm run dev
+To start the development server, run: `npm run dev`
 
 
 This command will start a development server and open the project in your default web browser. You can then make changes to the code, and the server will automatically reload with the updated changes.
