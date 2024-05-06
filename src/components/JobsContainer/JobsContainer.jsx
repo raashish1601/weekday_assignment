@@ -1,49 +1,71 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from 'react'
+import { JobCard } from "../JobCard/JobCard"
+import styles from "./JobsContainer.module.scss"
+import JobsFilter from '../JobsFilter/JobsFilter';
 
-function JobsContainer({ job, filterjobs }) {
-  const [showFullDetails, setShowFullDetails] = useState(false);
+const JobContainer = () => {
 
-  const toggleDetails = () => {
-    setShowFullDetails(!showFullDetails);
-  };
+  const [jobsData, setJobsData] = useState([]);
+  const [pageItem, setPageItem] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const pageRef = useRef(1);
+
+  const fetchJobsData = async () => {
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+
+    const body = JSON.stringify({
+      "limit": 10,
+      "offset": (pageRef.current - 1) * 10
+    });
+
+    const requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body
+    };
+
+    const jobData = await fetch("https://api.weekday.technology/adhoc/getSampleJdJSON", requestOptions)
+    const data = await jobData.json();
+    setJobsData([...jobsData, ...data.jdList]);
+  }
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (
+        window.innerHeight + document.documentElement.scrollTop ===
+        document.documentElement.offsetHeight
+      ) {
+        fetchJobsData();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [jobsData]);
+
+  useEffect(() => {
+    fetchJobsData();
+  }, [])
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center' }}>
-        <img src={job?.logoUrl} alt={job?.companyName} style={{ width: '100px', height: '100px', marginLeft: '10px',}} />
-        <div>
-          <h2 style={{ marginLeft: '10px' }}>{job?.companyName}</h2>
-          <p style={{ marginLeft: '10px' }}>{job?.jobRole}</p>
-          <p style={{ marginLeft: '10px' }}>{job?.location}</p>
+      <JobsFilter
+        jobsData={jobsData}
+      />
+      <div style={{ display: 'flex', justifyContent: 'center', width: '60%', marginRight: '20%', marginLeft: '20%' }}>
+        <div className={styles['job-card-wrapper']}>
+          {
+            jobsData?.map((jobData, index) => {
+              return (
+                <JobCard jobData={jobData} key={jobData.jdUid} />
+              )
+            })
+          }
         </div>
       </div>
-      
-      <p style={{ marginLeft: "15px" }}>Estimated Salary: {job.minJdSalary} - {job.maxJdSalary} {job.salaryCurrencyCode} ✅</p>
-      <p style={{ marginLeft: "15px" }}>About Company:</p>
-      <p style={{ marginLeft: "15px" }}>About US:</p>
-      <p style={{ marginLeft: "15px" }}>{showFullDetails ? job?.jobDetailsFromCompany : job?.jobDetailsFromCompany.slice(0, 300)}</p>
-      {job?.jobDetailsFromCompany.length > 300 && (
-        <button onClick={toggleDetails} style={{ marginLeft: "120px", color: "#6666ff", backgroundColor: "transparent", border: "none", cursor: "pointer" }}>
-          {showFullDetails ? "View less" : "View more"}
-        </button>
-      )}
-      
-      <div style={{ display: 'flex', justifyContent: 'center' }}>
-        <a href={job.jdLink} style={{ marginBottom: '10px', color: '#6666ff', textDecoration: 'none' }}>View Job</a>
-      </div>
-      
-      {job?.minExp ? (
-        <>
-          <p style={{ marginLeft: "15px" }}>Minimum Experience:</p>
-          <p style={{ marginLeft: "15px" }}>{job?.minExp}</p>
-        </>
-      ) : <div style={{ height: "100px" }}></div>}
-      
-      <button style={{ position: 'sticky', marginTop: '10px', backgroundColor: 'rgb(85, 239, 196)', color: 'black', border: 'none', padding: '8px 16px', borderRadius: '5px', width: "90%", marginLeft: "15px" }}>⚡ Easy Apply</button>
-      
-      <button style={{ position: 'sticky', marginTop: '10px', marginBottom: '10px', backgroundColor: '#6666ff', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '5px', width: "90%", marginLeft: "15px" }}>Unlock referral asks</button>
     </>
-  );
+  )
 }
 
-export default JobsContainer;
+export default JobContainer;
